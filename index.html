@@ -1,0 +1,1848 @@
+
+<!DOCTYPE html>
+<html lang="en" data-theme="black">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Tingling</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<style>
+/* ---------- THEMES ---------- */
+:root, [data-theme="black"] {
+    --bg: #000;
+    --bg2: #0d0d0d;
+    --bg-grad: linear-gradient(135deg, #000, #111, #1c1c1c);
+    --surface: #151515;
+    --surface2: #1f1f1f;
+    --accent: #2b2b2b;
+    --brand: #ff3b5c;
+    --brand-glow: rgba(255, 59, 92, 0.45);
+    --text: #f5f5f5;
+    --muted: rgba(245, 245, 245, 0.55);
+    --sent: #ff3b5c;
+    --sent-text: #fff;
+    --recv: #1a1a1a;
+    --glass: rgba(10, 10, 10, 0.75);
+    --border: rgba(255, 255, 255, 0.08);
+    --success: #2ed573;
+    --danger: #ff4757;
+}
+[data-theme="midnight"] {
+    --bg: #1a1a2e;
+    --bg2: #16213e;
+    --bg-grad: linear-gradient(135deg, #1a1a2e, #16213e, #0f3460);
+    --surface: #16213e;
+    --surface2: #0f3460;
+    --accent: #0f3460;
+    --brand: #e94560;
+    --brand-glow: rgba(233, 69, 96, 0.5);
+    --text: #f0f0f0;
+    --muted: rgba(240, 240, 240, 0.55);
+    --sent: #e94560;
+    --sent-text: #fff;
+    --recv: #16213e;
+    --glass: rgba(22, 33, 62, 0.75);
+    --border: rgba(255, 255, 255, 0.08);
+    --success: #2ed573;
+    --danger: #ff4757;
+}
+[data-theme="light"] {
+    --bg: #f0f8ff;
+    --bg2: #ffffff;
+    --bg-grad: linear-gradient(135deg, #f0f8ff, #ffffff, #d6ecf7);
+    --surface: #ffffff;
+    --surface2: #e8f1f8;
+    --accent: #87ceeb;
+    --brand: #4682b4;
+    --brand-glow: rgba(70, 130, 180, 0.4);
+    --text: #1f2d3a;
+    --muted: rgba(31, 45, 58, 0.55);
+    --sent: #4682b4;
+    --sent-text: #fff;
+    --recv: #f1f1f1;
+    --glass: rgba(255, 255, 255, 0.8);
+    --border: rgba(0, 0, 0, 0.08);
+    --success: #2e9e5b;
+    --danger: #e0394e;
+}
+[data-theme="mono"] {
+    --bg: #ffffff;
+    --bg2: #ffffff;
+    --bg-grad: #ffffff;
+    --surface: #ffffff;
+    --surface2: #f0f0f0;
+    --accent: #000000;
+    --brand: #000000;
+    --brand-glow: rgba(0, 0, 0, 0.2);
+    --text: #000000;
+    --muted: rgba(0, 0, 0, 0.55);
+    --sent: #000000;
+    --sent-text: #ffffff;
+    --recv: #f0f0f0;
+    --glass: rgba(255, 255, 255, 0.9);
+    --border: rgba(0, 0, 0, 0.15);
+    --success: #000000;
+    --danger: #000000;
+}
+
+/* ---------- BASE ---------- */
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Poppins', sans-serif; -webkit-tap-highlight-color: transparent; }
+button { border: none; outline: none; background: none; cursor: pointer; color: inherit; font-weight: 600; font-family: inherit; }
+input { outline: none; font-family: inherit; }
+.hidden { display: none !important; }
+
+body {
+    height: 100vh; height: 100dvh;
+    display: flex; justify-content: center; align-items: center;
+    background: var(--bg-grad); background-size: 400% 400%;
+    animation: gradientBG 16s ease infinite;
+    color: var(--text); overflow: hidden;
+}
+@keyframes gradientBG { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.08); } 100% { transform: scale(1); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.app {
+    position: relative;
+    width: 100%; max-width: 450px;
+    height: 100vh; height: 100dvh;
+    background: var(--bg);
+    overflow: hidden;
+}
+@media (min-width: 451px) {
+    .app { height: 95vh; max-height: 900px; border-radius: 22px; box-shadow: 0 10px 40px rgba(0,0,0,0.35); }
+}
+
+/* ---------- TOAST ---------- */
+#toast {
+    position: absolute; bottom: 96px; left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: var(--surface2); color: var(--text);
+    padding: 12px 20px; border-radius: 30px;
+    font-size: 0.9rem; z-index: 200;
+    opacity: 0; pointer-events: none;
+    transition: all 0.3s ease;
+    border: 1px solid var(--border);
+    box-shadow: 0 6px 22px rgba(0,0,0,0.3);
+    max-width: 88%; text-align: center;
+}
+#toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+#toast.success { border-color: var(--success); }
+#toast.error { border-color: var(--danger); }
+
+/* ---------- FORMS ---------- */
+.input-field {
+    width: 100%; min-height: 56px;
+    padding: 16px 22px; border-radius: 16px;
+    border: 2px solid var(--accent);
+    background: var(--surface); color: var(--text);
+    font-size: 1.05rem; transition: 0.2s;
+}
+.input-field::placeholder { color: var(--muted); }
+.input-field:focus { border-color: var(--brand); box-shadow: 0 0 0 4px var(--brand-glow); }
+.field-label { font-size: 0.8rem; color: var(--muted); margin: 4px 0 -6px 8px; }
+.hint { font-size: 0.75rem; color: var(--muted); margin: -6px 0 0 8px; }
+
+.btn-primary {
+    width: 100%; min-height: 56px; border-radius: 16px;
+    background: var(--brand); color: var(--sent-text);
+    font-size: 1.05rem; font-weight: 700; transition: 0.2s;
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px var(--brand-glow); }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
+.btn-ghost {
+    width: 100%; min-height: 52px; border-radius: 16px;
+    background: transparent; color: var(--text);
+    border: 2px solid var(--accent); font-size: 0.95rem;
+}
+.btn-google {
+    width: 100%; min-height: 56px; border-radius: 16px;
+    background: var(--surface); color: var(--text);
+    border: 2px solid var(--accent);
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    font-size: 1rem; font-weight: 600; transition: 0.2s;
+}
+.btn-google:hover { border-color: var(--brand); }
+.g-logo {
+    width: 26px; height: 26px; border-radius: 50%;
+    background: #fff; color: #4285f4;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.95rem;
+}
+.divider { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: 0.85rem; margin: 4px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--border); }
+.link-btn { color: var(--muted); font-size: 0.9rem; text-decoration: underline; align-self: center; padding: 6px; }
+
+/* ---------- AUTH ---------- */
+#auth-view {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: 28px 24px; overflow-y: auto; z-index: 10;
+}
+.brand { text-align: center; margin-bottom: 26px; }
+.brand-logo {
+    width: 76px; height: 76px; border-radius: 24px; margin: 0 auto 14px;
+    background: var(--brand); color: var(--sent-text);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.1rem; box-shadow: 0 0 26px var(--brand-glow);
+}
+.auth-title { font-size: 2.3rem; font-weight: 700; color: var(--brand); }
+.auth-tagline { color: var(--muted); font-size: 0.95rem; margin-top: 4px; }
+.auth-form { display: flex; flex-direction: column; gap: 14px; }
+.auth-switch { text-align: center; color: var(--muted); margin-top: 8px; font-size: 0.95rem; }
+.auth-switch a { color: var(--brand); font-weight: 700; cursor: pointer; }
+.creator-credits { position: absolute; bottom: 12px; left: 0; right: 0; text-align: center; font-size: 0.7rem; color: var(--muted); }
+
+/* ---------- MAIN ---------- */
+#main-view { position: absolute; inset: 0; }
+.topbar {
+    position: absolute; top: 0; left: 0; right: 0; height: 64px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px; background: var(--glass);
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border); z-index: 5;
+}
+.brand-small { font-weight: 700; font-size: 1.3rem; color: var(--brand); }
+.icon-btn {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: var(--surface); color: var(--text);
+    display: flex; align-items: center; justify-content: center; font-size: 1.2rem;
+}
+.pill-btn { padding: 9px 16px; border-radius: 20px; background: var(--brand); color: var(--sent-text); font-size: 0.85rem; }
+
+.tab { position: absolute; top: 64px; bottom: 80px; left: 0; right: 0; overflow-y: auto; padding: 14px; }
+.bottomnav {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 80px;
+    display: flex; justify-content: space-around; align-items: center;
+    background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border); z-index: 5;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+.nav-btn {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    color: var(--muted); font-size: 0.75rem; min-width: 80px; padding: 6px; position: relative;
+}
+.nav-btn .ico { font-size: 1.35rem; }
+.nav-btn.active { color: var(--brand); }
+.nav-badge {
+    position: absolute; top: 0; right: 14px;
+    background: var(--brand); color: var(--sent-text);
+    font-size: 0.65rem; font-weight: 700;
+    min-width: 18px; height: 18px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center; padding: 0 5px;
+}
+
+.my-card {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 14px 16px; border-radius: 18px;
+    background: var(--surface); border: 1px solid var(--border); margin-bottom: 14px;
+}
+.my-card small { color: var(--muted); font-size: 0.75rem; display: block; }
+.my-card strong { font-size: 1.05rem; letter-spacing: 0.02em; }
+.section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 16px 4px 8px; }
+.search-box { margin-bottom: 12px; min-height: 48px; padding: 12px 18px; font-size: 0.95rem; }
+
+.row {
+    display: flex; align-items: center; gap: 14px;
+    padding: 14px 16px; margin-bottom: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 18px; cursor: pointer; transition: transform 0.15s;
+}
+.row:active { transform: scale(0.98); }
+.row-main { flex: 1; min-width: 0; }
+.row-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-sub { font-size: 0.8rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.chip { padding: 8px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; }
+.chip-ok { background: var(--success); color: #fff; }
+.chip-no { background: var(--surface2); color: var(--text); }
+.chip-danger { background: var(--danger); color: #fff; }
+
+.avatar {
+    position: relative; width: 50px; height: 50px; border-radius: 50%;
+    background: var(--surface2); display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; flex-shrink: 0;
+}
+.dot {
+    position: absolute; right: 0; bottom: 0; width: 13px; height: 13px;
+    border-radius: 50%; background: #888; border: 2px solid var(--surface);
+}
+.dot.online { background: var(--success); }
+.badge {
+    background: var(--brand); color: var(--sent-text);
+    border-radius: 12px; min-width: 22px; height: 22px; padding: 0 7px;
+    font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.call-icon { font-size: 1.1rem; width: 36px; height: 36px; border-radius: 50%; background: var(--surface2); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.call-icon.bad { color: var(--danger); }
+
+.empty { text-align: center; padding: 48px 24px; color: var(--muted); }
+.empty .emo { font-size: 3.2rem; margin-bottom: 10px; }
+.empty h3 { color: var(--text); margin-bottom: 6px; font-weight: 600; }
+.empty p { font-size: 0.9rem; line-height: 1.5; max-width: 280px; margin: 0 auto; }
+.empty .btn-primary { width: auto; padding: 12px 24px; margin-top: 18px; min-height: 0; font-size: 0.95rem; }
+
+.spinner {
+    width: 34px; height: 34px; margin: 0 auto 12px;
+    border: 3px solid var(--border); border-top-color: var(--brand);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+}
+
+/* ---------- CHAT ---------- */
+#chat-view {
+    position: absolute; inset: 0; z-index: 20;
+    background: var(--bg); display: flex; flex-direction: column;
+    transform: translateX(100%); transition: transform 0.3s ease-in-out;
+}
+#chat-view.active { transform: translateX(0); }
+.chat-head {
+    height: 68px; flex-shrink: 0; display: flex; align-items: center; gap: 10px; padding: 0 10px;
+    background: var(--glass); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+}
+.chat-head .who { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.chat-head .avatar { width: 42px; height: 42px; font-size: 1.35rem; }
+.chat-head .meta { min-width: 0; }
+.chat-name { font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-status { font-size: 0.75rem; color: var(--muted); }
+.chat-status.typing { color: var(--brand); font-style: italic; }
+.head-actions { display: flex; gap: 6px; }
+.head-actions .icon-btn { width: 38px; height: 38px; font-size: 1rem; }
+
+.messages { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 6px; }
+.day-sep { align-self: center; font-size: 0.72rem; color: var(--muted); background: var(--surface); padding: 4px 12px; border-radius: 12px; margin: 8px 0; }
+.bubble {
+    max-width: 78%; padding: 10px 14px; border-radius: 18px;
+    font-size: 0.95rem; line-height: 1.4; word-wrap: break-word; white-space: pre-wrap;
+}
+.bubble.sent { align-self: flex-end; background: var(--sent); color: var(--sent-text); border-bottom-right-radius: 6px; cursor: pointer; }
+.bubble.recv { align-self: flex-start; background: var(--recv); color: var(--text); border: 1px solid var(--border); border-bottom-left-radius: 6px; }
+.bubble .t { font-size: 0.65rem; opacity: 0.7; margin-top: 4px; text-align: right; }
+.bubble.recv .t { text-align: left; }
+
+/* Nep AI suggestions */
+.ai-panel {
+    flex-shrink: 0; display: flex; flex-direction: column; gap: 8px;
+    padding: 10px 12px; max-height: 220px; overflow-y: auto;
+    background: var(--glass); border-top: 1px solid var(--border);
+}
+.ai-chip {
+    text-align: left; padding: 10px 14px; border-radius: 14px;
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border); font-size: 0.9rem; font-weight: 400; line-height: 1.4;
+}
+.ai-chip:active { transform: scale(0.98); }
+.ai-tag { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--brand); margin-bottom: 4px; font-weight: 600; }
+.ai-btn { font-size: 1rem; color: var(--brand); flex-shrink: 0; }
+.ai-btn.loading { opacity: 0.5; pointer-events: none; }
+.ai-btn.loading::after { content: ""; }
+
+.compose {
+    flex-shrink: 0; display: flex; gap: 10px; align-items: center;
+    padding: 10px 12px; background: var(--glass); border-top: 1px solid var(--border);
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+}
+.compose input {
+    flex: 1; min-height: 48px; padding: 12px 18px; border-radius: 24px;
+    border: 1px solid var(--accent); background: var(--surface); color: var(--text); font-size: 1rem;
+}
+.send-btn {
+    width: 48px; height: 48px; border-radius: 50%; flex-shrink: 0;
+    background: var(--brand); color: var(--sent-text); font-size: 1.1rem;
+    display: flex; align-items: center; justify-content: center;
+}
+
+/* ---------- CALLS ---------- */
+.call-screen { position: absolute; inset: 0; z-index: 50; background: #000; display: none; }
+#remote-video { width: 100%; height: 100%; object-fit: cover; }
+#local-video {
+    position: absolute; bottom: 120px; right: 16px; width: 100px; height: 150px;
+    background: #222; border: 2px solid var(--brand); border-radius: 12px;
+    object-fit: cover; z-index: 51;
+}
+#audio-call-view {
+    background: var(--bg-grad); background-size: 400% 400%;
+    animation: gradientBG 16s ease infinite;
+    flex-direction: column; align-items: center; justify-content: center;
+}
+.audio-emoji { font-size: 6.5rem; margin-bottom: 18px; animation: pulse 2s infinite; }
+.audio-name { font-size: 1.9rem; font-weight: 700; margin-bottom: 8px; }
+.audio-status { font-size: 1.05rem; color: var(--brand); margin-bottom: 60px; }
+.call-controls { position: absolute; bottom: 40px; left: 0; right: 0; display: flex; justify-content: center; gap: 22px; z-index: 52; }
+.call-btn {
+    width: 66px; height: 66px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.8rem; font-weight: 600; color: #fff;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+}
+.btn-end { background: var(--danger); }
+.btn-accept { background: var(--success); }
+.btn-mute { background: rgba(255,255,255,0.18); }
+
+/* ---------- MODALS ---------- */
+.modal {
+    position: absolute; inset: 0; z-index: 100;
+    background: rgba(0,0,0,0.6); display: none;
+    align-items: center; justify-content: center; padding: 18px;
+}
+.sheet {
+    width: 100%; max-width: 380px; max-height: 88%; overflow-y: auto;
+    padding: 24px 20px; border-radius: 24px;
+    background: var(--bg2); border: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 12px;
+}
+.sheet h2 { font-size: 1.3rem; color: var(--brand); text-align: center; margin-bottom: 4px; }
+.sheet .sub { text-align: center; color: var(--muted); font-size: 0.88rem; line-height: 1.5; margin-bottom: 4px; }
+.close-link { align-self: center; color: var(--muted); text-decoration: underline; padding: 8px; font-size: 0.9rem; }
+.theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.theme-opt {
+    border-radius: 16px; padding: 10px; border: 2px solid var(--border);
+    background: var(--surface); color: var(--text); font-size: 0.85rem; text-align: left;
+}
+.theme-opt.active { border-color: var(--brand); }
+.swatch { height: 34px; border-radius: 10px; margin-bottom: 8px; border: 1px solid var(--border); display: flex; overflow: hidden; }
+.swatch span { flex: 1; }
+.menu-my-id { text-align: center; color: var(--muted); font-size: 0.9rem; }
+.menu-my-id strong { color: var(--text); display: block; font-size: 1.1rem; margin-top: 4px; }
+.search-result { margin-top: 6px; }
+.blocked-item { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 16px; background: var(--surface); }
+.blocked-item .row-main { flex: 1; }
+.list-scroll { display: flex; flex-direction: column; gap: 8px; max-height: 280px; overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<audio id="ring-tone" loop preload="auto"><source src="incoming.wav" type="audio/wav"></audio>
+<audio id="msg-tone" preload="auto"></audio>
+<audio id="remote-audio" autoplay></audio>
+
+<div class="app">
+
+    <div id="toast"></div>
+
+    <!-- ============ AUTH ============ -->
+    <section id="auth-view">
+        <div class="brand">
+            <div class="brand-logo">✦</div>
+            <h1 class="auth-title">Tingling</h1>
+            <p class="auth-tagline">Chat and call your friends, instantly.</p>
+        </div>
+
+        <form id="login-form" class="auth-form" onsubmit="return false">
+            <input type="email" id="login-email" class="input-field" placeholder="Email address" autocomplete="email">
+            <input type="password" id="login-password" class="input-field" placeholder="Password" autocomplete="current-password">
+            <button type="button" class="btn-primary" id="login-btn" onclick="login()">Log in</button>
+            <button type="button" class="link-btn" onclick="forgotPassword()">Forgot password?</button>
+            <div class="divider">or</div>
+            <button type="button" class="btn-google" onclick="googleSignIn()"><span class="g-logo">G</span> Continue with Google</button>
+            <p class="auth-switch">New to Tingling? <a onclick="toggleAuth('signup')">Create an account</a></p>
+        </form>
+
+        <form id="signup-form" class="auth-form hidden" onsubmit="return false">
+            <span class="field-label">Choose a username</span>
+            <input type="text" id="signup-username" class="input-field" placeholder="@username" maxlength="20" autocomplete="username">
+            <p class="hint">Letters, numbers and underscores. Friends can find you by this name.</p>
+            <input type="email" id="signup-email" class="input-field" placeholder="Email address" autocomplete="email">
+            <input type="password" id="signup-password" class="input-field" placeholder="Password (6+ characters)" autocomplete="new-password">
+            <button type="button" class="btn-primary" id="signup-btn" onclick="signup()">Create account</button>
+            <div class="divider">or</div>
+            <button type="button" class="btn-google" onclick="googleSignIn()"><span class="g-logo">G</span> Sign up with Google</button>
+            <p class="auth-switch">Already have an account? <a onclick="toggleAuth('login')">Log in</a></p>
+        </form>
+
+        <div class="creator-credits">Created by Shisir Bhattrai</div>
+    </section>
+
+    <!-- ============ MAIN ============ -->
+    <section id="main-view" class="hidden">
+        <header class="topbar">
+            <button class="icon-btn" onclick="openMenu()" aria-label="Menu">☰</button>
+            <span class="brand-small">Tingling</span>
+            <button class="pill-btn" onclick="openAddFriend()">+ Add</button>
+        </header>
+
+        <div class="tab" id="home-tab">
+            <div class="my-card">
+                <div>
+                    <small>Your Tingling ID</small>
+                    <strong id="home-my-id">ting-0000</strong>
+                </div>
+                <button class="pill-btn" onclick="copyMyId()">Copy</button>
+            </div>
+            <input type="text" id="friend-search" class="input-field search-box" placeholder="Search friends…" oninput="filterFriends()">
+            <div id="contacts-loading" class="empty"><div class="spinner"></div><p>Loading your friends…</p></div>
+            <div id="contact-list" class="hidden"></div>
+            <div id="contacts-empty" class="empty hidden">
+                <div class="emo">👋</div>
+                <h3>No friends yet</h3>
+                <p>Share your Tingling ID or username, or add someone else's, to start chatting and calling.</p>
+                <button class="btn-primary" onclick="openAddFriend()">Add a friend</button>
+            </div>
+        </div>
+
+        <div class="tab hidden" id="notifs-tab">
+            <div class="section-title">Friend requests</div>
+            <div id="request-list"></div>
+            <div id="requests-empty" class="empty hidden">
+                <div class="emo">📭</div>
+                <h3>All caught up</h3>
+                <p>New friend requests will appear here.</p>
+            </div>
+        </div>
+
+        <div class="tab hidden" id="calls-tab">
+            <div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+                <span>Recent calls</span>
+                <button class="link-btn" style="margin:0;font-size:0.8rem" onclick="clearCallHistory()">Clear</button>
+            </div>
+            <div id="call-history-list"></div>
+            <div id="calls-empty" class="empty hidden">
+                <div class="emo">📞</div>
+                <h3>No calls yet</h3>
+                <p>Your voice and video calls will show up here.</p>
+            </div>
+        </div>
+
+        <nav class="bottomnav">
+            <button class="nav-btn active" data-tab="home" onclick="switchTab('home')"><span class="ico">💬</span>Chats</button>
+            <button class="nav-btn" data-tab="notifs" onclick="switchTab('notifs')">
+                <span class="ico">👥</span>Requests
+                <span id="req-badge" class="nav-badge hidden">0</span>
+            </button>
+            <button class="nav-btn" data-tab="calls" onclick="switchTab('calls')"><span class="ico">📞</span>Calls</button>
+        </nav>
+    </section>
+
+    <!-- ============ CHAT ============ -->
+    <section id="chat-view">
+        <header class="chat-head">
+            <button class="icon-btn" onclick="closeChat()" aria-label="Back">←</button>
+            <div class="who">
+                <div class="avatar" id="chat-avatar">👤</div>
+                <div class="meta">
+                    <div class="chat-name" id="chat-name">Friend</div>
+                    <div class="chat-status" id="chat-status">Offline</div>
+                </div>
+            </div>
+            <div class="head-actions">
+                <button class="icon-btn" onclick="startCall(false)" title="Voice call">📞</button>
+                <button class="icon-btn" onclick="startCall(true)" title="Video call">🎥</button>
+                <button class="icon-btn" onclick="blockCurrentUser()" title="Block">⋯</button>
+            </div>
+        </header>
+        <div class="messages" id="messages"></div>
+        <div id="ai-panel" class="ai-panel hidden"></div>
+        <div class="compose">
+            <button class="icon-btn ai-btn" id="ai-btn" onclick="nepAiReply()" title="Nep AI Reply" aria-label="Nep AI Reply">✦</button>
+            <input type="text" id="msg-input" placeholder="Message…" autocomplete="off" maxlength="2000">
+            <button class="send-btn" onclick="sendMessage()" aria-label="Send">➤</button>
+        </div>
+    </section>
+
+    <!-- ============ CALL SCREENS ============ -->
+    <div id="call-view" class="call-screen">
+        <video id="remote-video" autoplay playsinline></video>
+        <video id="local-video" autoplay playsinline muted></video>
+        <div class="call-controls">
+            <button class="call-btn btn-mute" id="mute-btn" onclick="toggleMute()">Mute</button>
+            <button class="call-btn btn-end" onclick="endCall()">End</button>
+        </div>
+    </div>
+
+    <div id="audio-call-view" class="call-screen">
+        <div class="audio-emoji" id="audio-emoji">👤</div>
+        <div class="audio-name" id="audio-name">Friend</div>
+        <div class="audio-status" id="audio-status">Calling…</div>
+        <div class="call-controls">
+            <button class="call-btn btn-mute" id="audio-mute-btn" onclick="toggleMute()">Mute</button>
+            <button class="call-btn btn-end" onclick="endCall()">End</button>
+        </div>
+    </div>
+
+    <!-- ============ MODALS ============ -->
+
+    <!-- Setup profile -->
+    <div id="setup-modal" class="modal">
+        <div class="sheet">
+            <h2>Set up your profile</h2>
+            <p class="sub">This is how friends will see you on Tingling.</p>
+            <span class="field-label">Display name</span>
+            <input type="text" id="setup-name" class="input-field" placeholder="e.g. Shisir" maxlength="30">
+            <span class="field-label">Username</span>
+            <input type="text" id="setup-username" class="input-field" placeholder="@username" maxlength="20">
+            <p class="hint">Letters, numbers and underscores (3–20).</p>
+            <span class="field-label">Avatar emoji</span>
+            <input type="text" id="setup-emoji" class="input-field" placeholder="😊" maxlength="4">
+            <button class="btn-primary" id="setup-btn" onclick="saveProfile()">Let's go</button>
+        </div>
+    </div>
+
+    <!-- Add friend -->
+    <div id="add-friend-modal" class="modal">
+        <div class="sheet">
+            <h2>Add a friend</h2>
+            <p class="sub">Enter their Tingling ID (ting-1234) or username.</p>
+            <input type="text" id="search-id" class="input-field" placeholder="ting-1234 or @username" autocomplete="off">
+            <button class="btn-primary" id="search-btn" onclick="searchUser()">Search</button>
+            <div id="search-result" class="search-result"></div>
+            <button class="close-link" onclick="closeModal('add-friend-modal')">Close</button>
+        </div>
+    </div>
+
+    <!-- Incoming call -->
+    <div id="incoming-call-modal" class="modal">
+        <div class="sheet" style="align-items:center">
+            <div class="sub">Incoming call</div>
+            <div id="incoming-info" style="text-align:center"></div>
+            <div style="display:flex;gap:28px;margin-top:10px">
+                <button class="call-btn btn-end" onclick="rejectCall()">Decline</button>
+                <button class="call-btn btn-accept" onclick="acceptCall()">Accept</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Menu -->
+    <div id="menu-modal" class="modal">
+        <div class="sheet">
+            <h2>Menu</h2>
+            <div class="menu-my-id">Your Tingling ID<strong id="menu-my-id">ting-0000</strong></div>
+            <span class="field-label">Theme</span>
+            <div class="theme-grid" id="theme-grid"></div>
+            <button class="btn-ghost" onclick="openProfileEdit()">Edit profile</button>
+            <button class="btn-ghost" onclick="openBlockedList()">Blocked users</button>
+            <button class="btn-primary" style="background:var(--danger);margin-top:6px" onclick="logout()">Log out</button>
+            <button class="close-link" onclick="closeModal('menu-modal')">Close</button>
+            <div style="font-size:0.7rem;text-align:center;opacity:0.5">Tingling · by Shisir Bhattrai</div>
+        </div>
+    </div>
+
+    <!-- Edit profile -->
+    <div id="profile-modal" class="modal">
+        <div class="sheet">
+            <h2>Edit profile</h2>
+            <span class="field-label">Display name</span>
+            <input type="text" id="edit-name" class="input-field" placeholder="Name" maxlength="30">
+            <span class="field-label">Username</span>
+            <input type="text" id="edit-username" class="input-field" placeholder="@username" maxlength="20">
+            <span class="field-label">Avatar emoji</span>
+            <input type="text" id="edit-emoji" class="input-field" placeholder="😊" maxlength="4">
+            <button class="btn-primary" onclick="updateProfile()">Save changes</button>
+            <button class="close-link" onclick="closeModal('profile-modal')">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Blocked users -->
+    <div id="blocked-modal" class="modal">
+        <div class="sheet">
+            <h2>Blocked users</h2>
+            <div id="blocked-list" class="list-scroll"></div>
+            <button class="close-link" onclick="closeModal('blocked-modal')">Close</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+// ============ CONFIG ============
+const firebaseConfig = {
+    apiKey: "AIzaSyDarxJCyZK8YjsNL6Kbph2TSW6JZNRW_Pg",
+    authDomain: "shisir879-93477.firebaseapp.com",
+    databaseURL: "https://shisir879-93477-default-rtdb.firebaseio.com",
+    projectId: "shisir879-93477",
+    storageBucket: "shisir879-93477.firebasestorage.app",
+    messagingSenderId: "655372809748",
+    appId: "1:655372809748:web:c5fbd2817b700be5f7d901"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.database();
+const googleProvider = new firebase.auth.GoogleAuthProvider();
+
+// Nep AI Reply: URL of your server-side endpoint (Cloud Function). Never put the AI key here.
+const NEP_AI_ENDPOINT = '';
+const NEP_AI_LABELS = { ne: 'नेपाली', en: 'English', rn: 'Romanized Nepali' };
+
+const CALL_TIMEOUT_MS = 45000;
+const RING_WINDOW_MS = 60000;
+const SERVERS = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+// ============ STATE ============
+let currentUser = null;
+let pendingUsername = '';
+let setupUser = null;
+let currentChatUser = null;
+let currentChatID = null;
+let chatOpenedAt = 0;
+let msgRef = null;
+let typingRef = null;
+let typingCb = null;
+let typingOther = false;
+let typingTimer = null;
+let blockedUsers = {};
+let contactsRef = null;
+let presenceCache = {};
+const watchedPresence = new Set();
+let unreadMap = {};
+let incomingCallData = null;
+let callState = null;      // { id, role, connected, peer, isVideo, logged }
+let callListeners = [];
+let peerConnection = null;
+let localStream = null;
+let isMuted = false;
+let callTimeout = null;
+
+// ============ HELPERS ============
+const $ = id => document.getElementById(id);
+function el(tag, cls, text) {
+    const n = document.createElement(tag);
+    if (cls) n.className = cls;
+    if (text !== undefined && text !== null) n.textContent = text;
+    return n;
+}
+function toast(msg, type = '') {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = type ? `show ${type}` : 'show';
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 2800);
+}
+function closeModal(id) { $(id).style.display = 'none'; }
+function openModal(id) { $(id).style.display = 'flex'; }
+function getChatId(a, b) { return a < b ? `${a}_${b}` : `${b}_${a}`; }
+function normalizeHandle(s) { return (s || '').trim().replace(/^@/, '').toLowerCase(); }
+function isValidHandle(h) { return /^[a-z0-9_]{3,20}$/.test(h); }
+function suggestHandle(email) {
+    return (email || '').split('@')[0].toLowerCase().replace(/[^a-z0-9_]/g, '').slice(0, 20);
+}
+function timeStr(ts) {
+    return new Date(ts || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+function dayLabel(d) {
+    const today = new Date();
+    const yest = new Date(); yest.setDate(today.getDate() - 1);
+    if (d.toDateString() === today.toDateString()) return 'Today';
+    if (d.toDateString() === yest.toDateString()) return 'Yesterday';
+    return d.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function lastSeenText(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'Last seen just now';
+    if (mins < 60) return `Last seen ${mins}m ago`;
+    const hrs = Math.floor(mins / 60);
+    if (hrs < 24) return `Last seen ${hrs}h ago`;
+    return `Last seen ${new Date(ts).toLocaleDateString([], { month: 'short', day: 'numeric' })}`;
+}
+function presenceText(p) {
+    if (p && p.online) return 'Online';
+    if (p && p.lastSeen) return lastSeenText(p.lastSeen);
+    return 'Offline';
+}
+const AUTH_ERRORS = {
+    'auth/invalid-email': 'That email doesn’t look right.',
+    'auth/missing-password': 'Please enter your password.',
+    'auth/wrong-password': 'Incorrect password. Try again or reset it.',
+    'auth/invalid-credential': 'Email or password is incorrect.',
+    'auth/user-not-found': 'No account found with this email.',
+    'auth/email-already-in-use': 'An account already exists with this email. Try logging in.',
+    'auth/weak-password': 'Use at least 6 characters for your password.',
+    'auth/too-many-requests': 'Too many attempts. Please wait a moment.',
+    'auth/network-request-failed': 'Network issue. Check your connection.',
+    'auth/popup-blocked': 'Pop-up was blocked. Allow pop-ups and try again.',
+    'auth/cancelled-popup-request': '',
+    'auth/popup-closed-by-user': ''
+};
+function friendlyError(e) {
+    if (e && e.code && e.code in AUTH_ERRORS) return AUTH_ERRORS[e.code];
+    return (e && e.message) || 'Something went wrong. Please try again.';
+}
+
+// ============ THEMES ============
+const THEMES = [
+    { id: 'black',    label: 'Black',          bg: '#000',    brand: '#ff3b5c' },
+    { id: 'midnight', label: 'Midnight',       bg: '#1a1a2e', brand: '#e94560' },
+    { id: 'light',    label: 'Light',          bg: '#f0f8ff', brand: '#4682b4' },
+    { id: 'mono',     label: 'Black & White',  bg: '#ffffff', brand: '#000000' }
+];
+function applyTheme(id) {
+    if (!THEMES.some(t => t.id === id)) id = 'black';
+    document.documentElement.dataset.theme = id;
+    try { localStorage.setItem('tingling-theme', id); } catch (e) {}
+    renderThemeOptions();
+}
+function renderThemeOptions() {
+    const grid = $('theme-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    const current = document.documentElement.dataset.theme;
+    THEMES.forEach(t => {
+        const b = el('button', 'theme-opt' + (t.id === current ? ' active' : ''));
+        const sw = el('div', 'swatch');
+        const a = el('span'); a.style.background = t.bg;
+        const c = el('span'); c.style.background = t.brand;
+        sw.append(a, c);
+        b.append(sw, el('div', '', t.label));
+        b.onclick = () => applyTheme(t.id);
+        grid.appendChild(b);
+    });
+}
+try { applyTheme(localStorage.getItem('tingling-theme') || 'black'); } catch (e) { applyTheme('black'); }
+
+// ============ AUTH UI ============
+function toggleAuth(mode) {
+    $('login-form').classList.toggle('hidden', mode !== 'login');
+    $('signup-form').classList.toggle('hidden', mode !== 'signup');
+}
+function setBtn(btn, busy, idleText, busyText) {
+    btn.disabled = busy;
+    btn.textContent = busy ? busyText : idleText;
+}
+
+async function login() {
+    const email = $('login-email').value.trim();
+    const pass = $('login-password').value;
+    if (!email || !pass) return toast('Enter your email and password', 'error');
+    const btn = $('login-btn');
+    setBtn(btn, true, 'Log in', 'Logging in…');
+    try {
+        await auth.signInWithEmailAndPassword(email, pass);
+    } catch (e) {
+        toast(friendlyError(e), 'error');
+    } finally {
+        setBtn(btn, false, 'Log in', 'Logging in…');
+    }
+}
+
+async function signup() {
+    const handle = normalizeHandle($('signup-username').value);
+    const email = $('signup-email').value.trim();
+    const pass = $('signup-password').value;
+    if (!isValidHandle(handle)) return toast('Username: 3–20 letters, numbers or _', 'error');
+    if (!email) return toast('Enter your email', 'error');
+    if (pass.length < 6) return toast('Password must be at least 6 characters', 'error');
+
+    const btn = $('signup-btn');
+    setBtn(btn, true, 'Create account', 'Creating…');
+    try {
+        const taken = await db.ref(`handles/${handle}`).once('value');
+        if (taken.exists()) { toast('That username is taken. Try another.', 'error'); return; }
+        pendingUsername = handle;
+        await auth.createUserWithEmailAndPassword(email, pass);
+    } catch (e) {
+        pendingUsername = '';
+        toast(friendlyError(e), 'error');
+    } finally {
+        setBtn(btn, false, 'Create account', 'Creating…');
+    }
+}
+
+async function googleSignIn() {
+    try {
+        await auth.signInWithPopup(googleProvider);
+    } catch (e) {
+        const msg = friendlyError(e);
+        if (msg) toast(msg, 'error');
+    }
+}
+
+async function forgotPassword() {
+    const email = $('login-email').value.trim();
+    if (!email) return toast('Type your email above first', 'error');
+    try {
+        await auth.sendPasswordResetEmail(email);
+        toast('Reset link sent. Check your inbox.', 'success');
+    } catch (e) {
+        toast(friendlyError(e), 'error');
+    }
+}
+
+function showAuthScreen() {
+    $('main-view').classList.add('hidden');
+    $('setup-modal').style.display = 'none';
+    $('auth-view').classList.remove('hidden');
+}
+
+function openSetup(user) {
+    setupUser = user;
+    $('auth-view').classList.add('hidden');
+    $('main-view').classList.add('hidden');
+    $('setup-name').value = user.displayName || '';
+    $('setup-username').value = pendingUsername || suggestHandle(user.email);
+    $('setup-emoji').value = '';
+    openModal('setup-modal');
+}
+
+async function claimHandle(handle, uid) {
+    const r = await db.ref(`handles/${handle}`).transaction(cur =>
+        (cur === null || cur === uid) ? uid : undefined
+    );
+    return r.committed;
+}
+
+async function saveProfile() {
+    const name = $('setup-name').value.trim();
+    const handle = normalizeHandle($('setup-username').value);
+    const emoji = $('setup-emoji').value.trim() || '😊';
+    if (!name) return toast('Please enter your name', 'error');
+    if (!isValidHandle(handle)) return toast('Username: 3–20 letters, numbers or _', 'error');
+
+    const user = auth.currentUser || setupUser;
+    const btn = $('setup-btn');
+    setBtn(btn, true, "Let's go", 'Saving…');
+    try {
+        const claimed = await claimHandle(handle, user.uid);
+        if (!claimed) return toast('That username is taken. Try another.', 'error');
+
+        const userData = {
+            name, emoji, username: handle,
+            email: user.email || '',
+            userId: `ting-${Math.floor(1000 + Math.random() * 9000)}`,
+            uid: user.uid,
+            callStatus: 'available',
+            createdAt: Date.now()
+        };
+        await db.ref(`users/${user.uid}`).set(userData);
+        currentUser = userData;
+        pendingUsername = '';
+        closeModal('setup-modal');
+        toast('Welcome to Tingling 🎉', 'success');
+        initApp();
+    } catch (e) {
+        toast(friendlyError(e), 'error');
+    } finally {
+        setBtn(btn, false, "Let's go", 'Saving…');
+    }
+}
+
+function logout() {
+    if (currentUser) db.ref(`users/${currentUser.uid}/callStatus`).set('available').catch(() => {});
+    if (currentUser) db.ref(`presence/${currentUser.uid}`).set({ online: false, lastSeen: Date.now() }).catch(() => {});
+    cleanupAll();
+    auth.signOut().then(() => location.reload());
+}
+
+// ============ AUTH STATE ============
+auth.onAuthStateChanged(async user => {
+    if (!user) {
+        currentUser = null;
+        showAuthScreen();
+        return;
+    }
+    try {
+        const snap = await db.ref(`users/${user.uid}`).once('value');
+        if (snap.exists()) {
+            currentUser = { ...snap.val(), uid: user.uid };
+            initApp();
+        } else {
+            openSetup(user);
+        }
+    } catch (e) {
+        toast('Could not load your profile', 'error');
+    }
+});
+
+// ============ APP INIT ============
+function initApp() {
+    const me = currentUser.uid;
+    $('auth-view').classList.add('hidden');
+    $('main-view').classList.remove('hidden');
+    $('home-my-id').textContent = currentUser.userId;
+    $('menu-my-id').textContent = currentUser.userId;
+
+    db.ref(`users/${me}/callStatus`).set('available');
+    startPresence(me);
+
+    db.ref(`blocked/${me}`).on('value', s => { blockedUsers = s.val() || {}; });
+    db.ref(`unreadCounts/${me}`).on('value', s => { unreadMap = s.val() || {}; refreshBadges(); });
+
+    loadContacts();
+    listenForRequests();
+    listenForCalls();
+    switchTab('home');
+}
+
+function cleanupAll() {
+    const me = currentUser && currentUser.uid;
+    if (me) {
+        db.ref(`blocked/${me}`).off();
+        db.ref(`unreadCounts/${me}`).off();
+        db.ref(`requests/${me}`).off();
+        db.ref(`calls`).off();
+    }
+    if (contactsRef) { contactsRef.off(); contactsRef = null; }
+    closeChat();
+    endCall(false);
+}
+
+function startPresence(uid) {
+    const statusRef = db.ref(`presence/${uid}`);
+    db.ref('.info/connected').on('value', snap => {
+        if (snap.val() !== true) return;
+        statusRef.onDisconnect().set({ online: false, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+        statusRef.set({ online: true, lastSeen: firebase.database.ServerValue.TIMESTAMP });
+    });
+}
+
+function watchPresence(uid) {
+    if (watchedPresence.has(uid)) return;
+    watchedPresence.add(uid);
+    db.ref(`presence/${uid}`).on('value', s => {
+        presenceCache[uid] = s.val();
+        renderPresence(uid);
+    });
+}
+
+function renderPresence(uid) {
+    const p = presenceCache[uid];
+    document.querySelectorAll(`[data-dot="${uid}"]`).forEach(d => d.classList.toggle('online', !!(p && p.online)));
+    document.querySelectorAll(`[data-pres="${uid}"]`).forEach(s => s.textContent = presenceText(p));
+    if (currentChatUser && currentChatUser.uid === uid) updateChatStatus();
+}
+
+// ============ TABS ============
+function switchTab(tab) {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('hidden', t.id !== `${tab}-tab`));
+    if (tab === 'calls') loadCallHistory();
+}
+
+// ============ CONTACTS ============
+function loadContacts() {
+    const me = currentUser.uid;
+    if (contactsRef) contactsRef.off();
+    contactsRef = db.ref(`contacts/${me}`);
+    contactsRef.on('value', async snap => {
+        const list = $('contact-list');
+        const loading = $('contacts-loading');
+        const empty = $('contacts-empty');
+        loading.classList.add('hidden');
+
+        const uids = snap.exists()
+            ? Object.keys(snap.val()).filter(u => !blockedUsers[u])
+            : [];
+
+        list.innerHTML = '';
+        if (uids.length === 0) {
+            list.classList.add('hidden');
+            empty.classList.remove('hidden');
+            return;
+        }
+        empty.classList.add('hidden');
+        list.classList.remove('hidden');
+
+        const users = await Promise.all(uids.map(u =>
+            db.ref(`users/${u}`).once('value').then(s => ({ uid: u, data: s.val() }))
+        ));
+        list.innerHTML = '';
+        users.forEach(({ uid, data }) => {
+            if (!data) return;
+            list.appendChild(buildContactRow(uid, data));
+            watchPresence(uid);
+            renderPresence(uid);
+        });
+        refreshBadges();
+        filterFriends();
+    });
+}
+
+function buildContactRow(uid, data) {
+    const row = el('div', 'row');
+    row.dataset.name = (data.name || '').toLowerCase();
+    row.dataset.chat = getChatId(currentUser.uid, uid);
+
+    const av = el('div', 'avatar', data.emoji || '👤');
+    const dot = el('span', 'dot');
+    dot.dataset.dot = uid;
+    av.appendChild(dot);
+
+    const main = el('div', 'row-main');
+    main.appendChild(el('div', 'row-title', data.name || 'Friend'));
+    const sub = el('div', 'row-sub', 'Offline');
+    sub.dataset.pres = uid;
+    main.appendChild(sub);
+
+    const badge = el('span', 'badge hidden', '0');
+    badge.dataset.badge = row.dataset.chat;
+
+    row.append(av, main, badge);
+    row.onclick = () => openChat({ uid, ...data });
+    return row;
+}
+
+function refreshBadges() {
+    document.querySelectorAll('[data-badge]').forEach(b => {
+        const n = unreadMap[b.dataset.badge] || 0;
+        b.textContent = n > 99 ? '99+' : n;
+        b.classList.toggle('hidden', n <= 0);
+    });
+}
+
+function filterFriends() {
+    const q = $('friend-search').value.trim().toLowerCase();
+    document.querySelectorAll('#contact-list .row').forEach(r => {
+        r.style.display = r.dataset.name.includes(q) ? '' : 'none';
+    });
+}
+
+function copyMyId() {
+    const text = currentUser.userId;
+    if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(() => toast('ID copied', 'success')).catch(() => toast(`Your ID: ${text}`));
+    } else {
+        toast(`Your ID: ${text}`);
+    }
+}
+
+// ============ FRIEND REQUESTS ============
+function listenForRequests() {
+    const me = currentUser.uid;
+    db.ref(`requests/${me}`).on('value', snap => {
+        const list = $('request-list');
+        list.innerHTML = '';
+        let count = 0;
+        if (snap.exists()) {
+            snap.forEach(child => {
+                const req = child.val();
+                if (!req || blockedUsers[req.from]) return;
+                count++;
+                const row = el('div', 'row');
+                row.style.cursor = 'default';
+                const av = el('div', 'avatar', req.emoji || '👤');
+                const main = el('div', 'row-main');
+                main.append(el('div', 'row-title', req.name || 'Someone'), el('div', 'row-sub', 'Wants to be friends'));
+                const actions = el('div', 'row-actions');
+                const ok = el('button', 'chip chip-ok', 'Accept');
+                const no = el('button', 'chip chip-no', 'Decline');
+                ok.onclick = () => acceptRequest(req.from);
+                no.onclick = () => rejectRequest(req.from);
+                actions.append(ok, no);
+                row.append(av, main, actions);
+                list.appendChild(row);
+            });
+        }
+        $('requests-empty').classList.toggle('hidden', count > 0);
+        const badge = $('req-badge');
+        badge.textContent = count;
+        badge.classList.toggle('hidden', count === 0);
+    });
+}
+
+function acceptRequest(friendUid) {
+    const me = currentUser.uid;
+    const updates = {};
+    updates[`contacts/${me}/${friendUid}`] = true;
+    updates[`contacts/${friendUid}/${me}`] = true;
+    updates[`requests/${me}/${friendUid}`] = null;
+    db.ref().update(updates)
+        .then(() => toast('You’re now friends 🎉', 'success'))
+        .catch(e => toast(friendlyError(e), 'error'));
+}
+
+function rejectRequest(friendUid) {
+    db.ref(`requests/${currentUser.uid}/${friendUid}`).remove()
+        .then(() => toast('Request declined'))
+        .catch(e => toast(friendlyError(e), 'error'));
+}
+
+// ============ ADD FRIEND ============
+function openAddFriend() {
+    $('search-id').value = '';
+    $('search-result').innerHTML = '';
+    openModal('add-friend-modal');
+}
+
+async function searchUser() {
+    const raw = $('search-id').value.trim();
+    if (!raw) return toast('Enter a Tingling ID or username', 'error');
+
+    const btn = $('search-btn');
+    setBtn(btn, true, 'Search', 'Searching…');
+    const result = $('search-result');
+    result.innerHTML = '';
+
+    try {
+        let target = null;
+        const idQuery = raw.toLowerCase().startsWith('ting-') ? raw.toLowerCase() : raw;
+        const byId = await db.ref('users').orderByChild('userId').equalTo(idQuery).once('value');
+        if (byId.exists()) {
+            byId.forEach(c => { if (!target) target = { uid: c.key, ...c.val() }; });
+        } else {
+            const h = normalizeHandle(raw);
+            const hs = await db.ref(`handles/${h}`).once('value');
+            if (hs.exists()) {
+                const us = await db.ref(`users/${hs.val()}`).once('value');
+                if (us.exists()) target = { uid: us.key, ...us.val() };
+            }
+        }
+
+        if (!target) { result.appendChild(el('p', 'hint', 'No one found with that ID or username.')); return; }
+        if (target.uid === currentUser.uid) { result.appendChild(el('p', 'hint', 'That’s you!')); return; }
+        if (blockedUsers[target.uid]) { result.appendChild(el('p', 'hint', 'This user is unavailable.')); return; }
+
+        const alreadyFriend = await db.ref(`contacts/${currentUser.uid}/${target.uid}`).once('value');
+        const row = el('div', 'row');
+        row.style.cursor = 'default';
+        row.append(el('div', 'avatar', target.emoji || '👤'));
+        const main = el('div', 'row-main');
+        main.append(el('div', 'row-title', target.name || 'User'), el('div', 'row-sub', target.username ? `@${target.username}` : target.userId));
+        row.appendChild(main);
+
+        if (alreadyFriend.exists()) {
+            row.appendChild(el('span', 'chip chip-no', 'Friends'));
+        } else {
+            const add = el('button', 'chip chip-ok', 'Add');
+            add.onclick = () => sendRequest(target);
+            row.appendChild(add);
+        }
+        result.appendChild(row);
+    } catch (e) {
+        toast(friendlyError(e), 'error');
+    } finally {
+        setBtn(btn, false, 'Search', 'Searching…');
+    }
+}
+
+function sendRequest(target) {
+    const me = currentUser;
+    db.ref(`requests/${target.uid}/${me.uid}`).set({
+        from: me.uid,
+        name: me.name,
+        emoji: me.emoji,
+        timestamp: Date.now()
+    }).then(() => {
+        db.ref(`notifications/${target.uid}`).push({ type: 'request', from: me.uid, name: me.name, read: false });
+        toast(`Request sent to ${target.name} 👋`, 'success');
+        closeModal('add-friend-modal');
+    }).catch(e => toast(friendlyError(e), 'error'));
+}
+
+// ============ CHAT ============
+function openChat(user) {
+    if (blockedUsers[user.uid]) return toast('This user is blocked', 'error');
+    if (currentChatID) closeChat();
+
+    currentChatUser = user;
+    currentChatID = getChatId(currentUser.uid, user.uid);
+    chatOpenedAt = Date.now();
+
+    $('chat-name').textContent = user.name || 'Friend';
+    $('chat-avatar').textContent = user.emoji || '👤';
+    updateChatStatus();
+
+    const box = $('messages');
+    box.innerHTML = '';
+    box.dataset.lastDay = '';
+    box.appendChild(el('div', 'empty', 'Loading messages…'));
+
+    $('chat-view').classList.add('active');
+    db.ref(`unreadCounts/${currentUser.uid}/${currentChatID}`).set(0);
+
+    const chatId = currentChatID;
+    msgRef = db.ref(`messages/${chatId}`).limitToLast(100);
+    msgRef.on('child_added', snap => {
+        const loader = box.querySelector('.empty');
+        if (loader) loader.remove();
+        const msg = snap.val();
+        if (!msg) return;
+        appendMessage(chatId, snap.key, msg);
+        if (msg.senderId !== currentUser.uid && msg.timestamp >= chatOpenedAt) playSound('msg');
+    });
+    msgRef.on('child_removed', snap => {
+        const node = box.querySelector(`[data-key="${snap.key}"]`);
+        if (node) node.remove();
+    });
+
+    watchTyping(chatId, user.uid);
+    setTimeout(() => $('msg-input').focus(), 300);
+}
+
+function closeChat() {
+    setTyping(false);
+    if (msgRef) { msgRef.off(); msgRef = null; }
+    if (typingRef) { typingRef.off('value', typingCb); typingRef = null; typingCb = null; }
+    typingOther = false;
+    clearTimeout(typingTimer);
+    closeAiPanel();
+    currentChatID = null;
+    currentChatUser = null;
+    $('chat-view').classList.remove('active');
+}
+
+function updateChatStatus() {
+    const s = $('chat-status');
+    if (!currentChatUser) return;
+    if (typingOther) {
+        s.textContent = 'typing…';
+        s.classList.add('typing');
+    } else {
+        s.textContent = presenceText(presenceCache[currentChatUser.uid]);
+        s.classList.remove('typing');
+    }
+}
+
+function watchTyping(chatId, otherUid) {
+    typingRef = db.ref(`typing/${chatId}/${otherUid}`);
+    typingCb = typingRef.on('value', s => {
+        typingOther = !!s.val();
+        updateChatStatus();
+    });
+}
+
+function setTyping(on) {
+    if (!currentChatID || !currentUser) return;
+    const ref = db.ref(`typing/${currentChatID}/${currentUser.uid}`);
+    if (on) {
+        ref.set(true);
+        ref.onDisconnect().remove();
+    } else {
+        ref.remove();
+    }
+}
+
+function appendMessage(chatId, key, msg) {
+    const box = $('messages');
+    const d = new Date(msg.timestamp || Date.now());
+    if (box.dataset.lastDay !== d.toDateString()) {
+        box.dataset.lastDay = d.toDateString();
+        box.appendChild(el('div', 'day-sep', dayLabel(d)));
+    }
+    const mine = msg.senderId === currentUser.uid;
+    const b = el('div', `bubble ${mine ? 'sent' : 'recv'}`);
+    b.dataset.key = key;
+    b.appendChild(el('div', '', msg.text));
+    b.appendChild(el('div', 't', timeStr(msg.timestamp)));
+    if (mine) {
+        b.title = 'Tap to delete';
+        b.onclick = () => {
+            if (!confirm('Delete this message for everyone?')) return;
+            db.ref(`messages/${chatId}/${key}`).remove()
+                .catch(e => toast(friendlyError(e), 'error'));
+        };
+    }
+    box.appendChild(b);
+    box.scrollTop = box.scrollHeight;
+}
+
+function sendMessage() {
+    const input = $('msg-input');
+    const text = input.value.trim();
+    if (!text || !currentChatID || !currentChatUser) return;
+    if (blockedUsers[currentChatUser.uid]) return toast('You blocked this user. Unblock to message.', 'error');
+
+    const chatId = currentChatID;
+    const peer = currentChatUser.uid;
+    input.value = '';
+    closeAiPanel();
+    setTyping(false);
+    clearTimeout(typingTimer);
+
+    db.ref(`messages/${chatId}`).push({ text, senderId: currentUser.uid, timestamp: Date.now() })
+        .then(() => {
+            db.ref(`unreadCounts/${peer}/${chatId}`).transaction(c => (c || 0) + 1);
+        })
+        .catch(() => toast('Message not sent. Try again.', 'error'));
+}
+
+// ============ NEP AI REPLY ============
+async function nepAiReply() {
+    if (!currentChatUser) return;
+    if (!NEP_AI_ENDPOINT) return toast('Nep AI is not set up yet', 'error');
+
+    const bubbles = $('messages').querySelectorAll('.bubble.recv');
+    const last = bubbles[bubbles.length - 1];
+    const text = last && last.firstChild ? last.firstChild.textContent : '';
+    if (!text) return toast('No message to reply to', 'error');
+
+    const btn = $('ai-btn');
+    btn.classList.add('loading');
+    try {
+        const user = auth.currentUser;
+        if (!user) throw new Error('Please log in again');
+        const token = await user.getIdToken();
+        const res = await fetch(NEP_AI_ENDPOINT, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ message: text })
+        });
+        if (!res.ok) throw new Error('Nep AI could not respond. Try again.');
+        const data = await res.json();
+        renderAiSuggestions(Array.isArray(data.suggestions) ? data.suggestions : []);
+    } catch (e) {
+        toast(e.message || 'Could not get suggestions', 'error');
+    } finally {
+        btn.classList.remove('loading');
+    }
+}
+
+function renderAiSuggestions(list) {
+    const panel = $('ai-panel');
+    panel.innerHTML = '';
+    list.slice(0, 3).forEach(s => {
+        if (!s || typeof s.text !== 'string' || !s.text.trim()) return;
+        const b = el('button', 'ai-chip');
+        b.append(
+            el('div', 'ai-tag', NEP_AI_LABELS[s.lang] || s.lang || 'Suggestion'),
+            el('div', '', s.text)
+        );
+        b.onclick = () => {
+            $('msg-input').value = s.text;
+            closeAiPanel();
+            $('msg-input').focus();
+        };
+        panel.appendChild(b);
+    });
+    if (!panel.children.length) return toast('No suggestions returned', 'error');
+    panel.classList.remove('hidden');
+}
+
+function closeAiPanel() {
+    const panel = $('ai-panel');
+    if (!panel) return;
+    panel.classList.add('hidden');
+    panel.innerHTML = '';
+}
+
+function blockCurrentUser() {
+    if (!currentChatUser) return;
+    const u = currentChatUser;
+    if (!confirm(`Block ${u.name}? They won’t be able to message or call you.`)) return;
+    const me = currentUser.uid;
+    db.ref(`blocked/${me}/${u.uid}`).set(true)
+        .then(() => {
+            db.ref(`contacts/${me}/${u.uid}`).remove();
+            closeChat();
+            toast(`${u.name} blocked`, 'success');
+        })
+        .catch(e => toast(friendlyError(e), 'error'));
+}
+
+// ============ BLOCKED LIST ============
+function openBlockedList() {
+    closeModal('menu-modal');
+    openModal('blocked-modal');
+    const list = $('blocked-list');
+    list.innerHTML = '';
+    db.ref(`blocked/${currentUser.uid}`).once('value').then(snap => {
+        if (!snap.exists()) {
+            list.appendChild(el('p', 'hint', 'No blocked users. Nice and peaceful.'));
+            return;
+        }
+        snap.forEach(child => {
+            db.ref(`users/${child.key}`).once('value').then(uSnap => {
+                const user = uSnap.val();
+                if (!user) return;
+                const item = el('div', 'blocked-item');
+                item.appendChild(el('div', 'avatar', user.emoji || '👤'));
+                const main = el('div', 'row-main');
+                main.appendChild(el('div', 'row-title', user.name || 'User'));
+                const btn = el('button', 'chip chip-no', 'Unblock');
+                btn.onclick = () => unblockUser(child.key);
+                item.append(main, btn);
+                list.appendChild(item);
+            });
+        });
+    });
+}
+
+function unblockUser(uid) {
+    db.ref(`blocked/${currentUser.uid}/${uid}`).remove()
+        .then(() => {
+            toast('User unblocked', 'success');
+            openBlockedList();
+        })
+        .catch(e => toast(friendlyError(e), 'error'));
+}
+
+// ============ MENU & PROFILE ============
+function openMenu() {
+    renderThemeOptions();
+    $('menu-my-id').textContent = currentUser.userId;
+    openModal('menu-modal');
+}
+
+function openProfileEdit() {
+    closeModal('menu-modal');
+    $('edit-name').value = currentUser.name || '';
+    $('edit-username').value = currentUser.username || '';
+    $('edit-emoji').value = currentUser.emoji || '';
+    openModal('profile-modal');
+}
+
+async function updateProfile() {
+    const name = $('edit-name').value.trim();
+    const emoji = $('edit-emoji').value.trim() || '😊';
+    const handle = normalizeHandle($('edit-username').value);
+    if (!name) return toast('Name is required', 'error');
+    if (!isValidHandle(handle)) return toast('Username: 3–20 letters, numbers or _', 'error');
+
+    const me = currentUser.uid;
+    try {
+        if (handle !== currentUser.username) {
+            const claimed = await claimHandle(handle, me);
+            if (!claimed) return toast('That username is taken', 'error');
+            if (currentUser.username) db.ref(`handles/${currentUser.username}`).remove();
+        }
+        await db.ref(`users/${me}`).update({ name, emoji, username: handle });
+        currentUser.name = name;
+        currentUser.emoji = emoji;
+        currentUser.username = handle;
+        closeModal('profile-modal');
+        toast('Profile updated', 'success');
+    } catch (e) {
+        toast(friendlyError(e), 'error');
+    }
+}
+
+// ============ CALL HISTORY ============
+const CALL_LABELS = {
+    outgoing:   { icon: '↗', label: 'Outgoing',   bad: false },
+    incoming:   { icon: '↙', label: 'Incoming',   bad: false },
+    missed:     { icon: '✕', label: 'Missed',     bad: true  },
+    declined:   { icon: '✕', label: 'Declined',   bad: true  },
+    unanswered: { icon: '↗', label: 'No answer',  bad: true  }
+};
+
+function logCallEntry(entry) {
+    db.ref(`callLogs/${currentUser.uid}`).push({
+        timestamp: Date.now(),
+        peerName: entry.peerName || 'Unknown',
+        peerUid: entry.peerUid || '',
+        type: entry.type,
+        isVideo: !!entry.isVideo
+    }).catch(() => {});
+}
+
+function loadCallHistory() {
+    const list = $('call-history-list');
+    const empty = $('calls-empty');
+    list.innerHTML = '';
+    empty.classList.add('hidden');
+
+    db.ref(`callLogs/${currentUser.uid}`).limitToLast(50).once('value').then(snap => {
+        if (!snap.exists()) { empty.classList.remove('hidden'); return; }
+        const entries = [];
+        snap.forEach(c => entries.push(c.val()));
+        entries.reverse().forEach(log => {
+            const meta = CALL_LABELS[log.type] || CALL_LABELS.outgoing;
+            const row = el('div', 'row');
+            const ico = el('div', 'call-icon' + (meta.bad ? ' bad' : ''), meta.icon);
+            const main = el('div', 'row-main');
+            main.appendChild(el('div', 'row-title', log.peerName || 'Unknown'));
+            const when = new Date(log.timestamp).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+            main.appendChild(el('div', 'row-sub', `${meta.label} · ${log.isVideo ? 'Video' : 'Voice'} · ${when}`));
+            const callBtn = el('span', 'hint', '↩ Chat');
+            row.append(ico, main, callBtn);
+            row.onclick = () => {
+                if (!log.peerUid) return;
+                db.ref(`users/${log.peerUid}`).once('value').then(s => {
+                    if (s.exists()) { switchTab('home'); openChat({ uid: log.peerUid, ...s.val() }); }
+                });
+            };
+            list.appendChild(row);
+        });
+    }).catch(() => empty.classList.remove('hidden'));
+}
+
+function clearCallHistory() {
+    if (!confirm('Clear all call history?')) return;
+    db.ref(`callLogs/${currentUser.uid}`).remove()
+        .then(() => { toast('Call history cleared'); loadCallHistory(); })
+        .catch(e => toast(friendlyError(e), 'error'));
+}
+
+// ============ CALLS ============
+function trackListen(ref, ev, fn) {
+    ref.on(ev, fn);
+    callListeners.push([ref, ev, fn]);
+}
+function clearCallListeners() {
+    callListeners.forEach(([r, e, f]) => r.off(e, f));
+    callListeners = [];
+}
+function setStatus(status) {
+    if (currentUser) db.ref(`users/${currentUser.uid}/callStatus`).set(status).catch(() => {});
+}
+function showCallScreen(isVideo, name, emoji, statusText) {
+    if (isVideo) {
+        $('call-view').style.display = 'block';
+    } else {
+        $('audio-call-view').style.display = 'flex';
+        $('audio-name').textContent = name;
+        $('audio-emoji').textContent = emoji || '👤';
+        $('audio-status').textContent = statusText;
+    }
+}
+function hideCallScreens() {
+    $('call-view').style.display = 'none';
+    $('audio-call-view').style.display = 'none';
+}
+function updateCallStatusText(text) {
+    $('audio-status').textContent = text;
+}
+function bindPeer(callId, otherUid) {
+    peerConnection = new RTCPeerConnection(SERVERS);
+    peerConnection.onicecandidate = e => {
+        if (e.candidate) db.ref(`iceCandidates/${callId}/${currentUser.uid}`).push(e.candidate.toJSON());
+    };
+    peerConnection.ontrack = e => {
+        $('remote-video').srcObject = e.streams[0];
+        $('remote-audio').srcObject = e.streams[0];
+    };
+    peerConnection.onconnectionstatechange = () => {
+        if (peerConnection && peerConnection.connectionState === 'failed') {
+            toast('Connection lost', 'error');
+            endCall(true);
+        }
+    };
+    trackListen(db.ref(`iceCandidates/${callId}/${otherUid}`), 'child_added', snap => {
+        if (peerConnection && snap.val()) {
+            peerConnection.addIceCandidate(new RTCIceCandidate(snap.val())).catch(() => {});
+        }
+    });
+}
+
+async function startCall(isVideo) {
+    if (!currentChatUser) return;
+    const peer = currentChatUser;
+    if (blockedUsers[peer.uid]) return toast('You blocked this user', 'error');
+    if (callState || incomingCallData) return toast('You’re already on a call', 'error');
+
+    try {
+        const busy = await db.ref(`users/${peer.uid}/callStatus`).once('value');
+        if (busy.val() === 'busy') return toast(`${peer.name} is on another call`, 'error');
+    } catch (e) {}
+
+    const callId = db.ref('calls').push().key;
+    callState = { id: callId, role: 'caller', connected: false, peer: { uid: peer.uid, name: peer.name }, isVideo, logged: false };
+    setStatus('busy');
+    showCallScreen(isVideo, peer.name, peer.emoji, 'Calling…');
+
+    bindPeer(callId, peer.uid);
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: isVideo, audio: true });
+        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+        if (isVideo) $('local-video').srcObject = localStream;
+
+        const offer = await peerConnection.createOffer();
+        await peerConnection.setLocalDescription(offer);
+
+        await db.ref(`calls/${callId}`).set({
+            callerId: currentUser.uid,
+            receiverId: peer.uid,
+            callerName: currentUser.name,
+            callerEmoji: currentUser.emoji,
+            offer: { type: offer.type, sdp: offer.sdp },
+            status: 'ringing',
+            isVideo,
+            timestamp: Date.now()
+        });
+
+        trackListen(db.ref(`calls/${callId}`), 'value', snap => {
+            const d = snap.val();
+            if (!d || !callState || callState.id !== callId) return;
+            if (d.status === 'answered' && peerConnection && !peerConnection.currentRemoteDescription && d.answer) {
+                peerConnection.setRemoteDescription(new RTCSessionDescription(d.answer))
+                    .then(() => {
+                        callState.connected = true;
+                        clearTimeout(callTimeout);
+                        updateCallStatusText('Connected');
+                    })
+                    .catch(console.error);
+            } else if (d.status === 'rejected') {
+                toast(`${peer.name} is unavailable right now`);
+                endCall(false);
+            } else if (d.status === 'ended') {
+                endCall(false);
+            }
+        });
+
+        callTimeout = setTimeout(() => {
+            if (callState && callState.id === callId && !callState.connected) {
+                toast('No answer', 'error');
+                endCall(true);
+            }
+        }, CALL_TIMEOUT_MS);
+    } catch (err) {
+        console.error(err);
+        toast('Microphone or camera access is needed to call', 'error');
+        endCall(true);
+    }
+}
+
+function listenForCalls() {
+    const me = currentUser.uid;
+    const ref = db.ref('calls').orderByChild('receiverId').equalTo(me);
+    ref.on('child_added', snap => {
+        const d = snap.val();
+        if (!d || d.status !== 'ringing') return;
+        if (Date.now() - (d.timestamp || 0) > RING_WINDOW_MS) return;
+        if (blockedUsers[d.callerId] || callState || incomingCallData) return;
+
+        incomingCallData = { key: snap.key, ...d, accepted: false };
+        $('incoming-info').innerHTML = '';
+        $('incoming-info').append(
+            el('div', '', d.callerEmoji || '👤'),
+            el('div', 'chat-name', d.callerName || 'Friend'),
+            el('div', 'sub', `${d.isVideo ? 'Video' : 'Voice'} call`)
+        );
+        $('incoming-info').firstChild.style.fontSize = '3.2rem';
+        openModal('incoming-call-modal');
+        playSound('ring');
+    });
+    ref.on('child_changed', snap => {
+        if (!incomingCallData || snap.key !== incomingCallData.key) return;
+        const d = snap.val();
+        if (d && (d.status === 'ended' || d.status === 'rejected') && !incomingCallData.accepted) {
+            logCallEntry({ type: 'missed', peerName: d.callerName, peerUid: d.callerId, isVideo: d.isVideo });
+            closeModal('incoming-call-modal');
+            stopSound('ring');
+            incomingCallData = null;
+        }
+    });
+}
+
+async function acceptCall() {
+    if (!incomingCallData) return;
+    const d = incomingCallData;
+    incomingCallData = null;
+    closeModal('incoming-call-modal');
+    stopSound('ring');
+
+    callState = { id: d.key, role: 'callee', connected: false, peer: { uid: d.callerId, name: d.callerName }, isVideo: d.isVideo, logged: false };
+    setStatus('busy');
+    showCallScreen(d.isVideo, d.callerName, d.callerEmoji, 'Connecting…');
+
+    bindPeer(d.key, d.callerId);
+    try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: d.isVideo, audio: true });
+        localStream.getTracks().forEach(t => peerConnection.addTrack(t, localStream));
+        if (d.isVideo) $('local-video').srcObject = localStream;
+
+        await peerConnection.setRemoteDescription(new RTCSessionDescription(d.offer));
+        const answer = await peerConnection.createAnswer();
+        await peerConnection.setLocalDescription(answer);
+
+        await db.ref(`calls/${d.key}`).update({
+            answer: { type: answer.type, sdp: answer.sdp },
+            status: 'answered'
+        });
+        callState.connected = true;
+        updateCallStatusText('Connected');
+
+        trackListen(db.ref(`calls/${d.key}`), 'value', snap => {
+            const v = snap.val();
+            if (v && v.status === 'ended') endCall(false);
+        });
+    } catch (e) {
+        console.error(e);
+        toast('Could not access camera or microphone', 'error');
+        endCall(true);
+    }
+}
+
+function rejectCall() {
+    if (!incomingCallData) return;
+    const d = incomingCallData;
+    incomingCallData = null;
+    db.ref(`calls/${d.key}`).update({ status: 'rejected' }).catch(() => {});
+    logCallEntry({ type: 'declined', peerName: d.callerName, peerUid: d.callerId, isVideo: d.isVideo });
+    closeModal('incoming-call-modal');
+    stopSound('ring');
+}
+
+function logCallOnce() {
+    if (!callState || callState.logged) return;
+    callState.logged = true;
+    const p = callState.peer;
+    let type;
+    if (callState.role === 'caller') type = callState.connected ? 'outgoing' : 'unanswered';
+    else type = callState.connected ? 'incoming' : 'missed';
+    logCallEntry({ type, peerName: p.name, peerUid: p.uid, isVideo: callState.isVideo });
+}
+
+function endCall(updateDB = true) {
+    if (!callState && !peerConnection && !localStream) {
+        hideCallScreens();
+        return;
+    }
+    logCallOnce();
+    clearTimeout(callTimeout);
+
+    const id = callState ? callState.id : null;
+    if (updateDB && id) db.ref(`calls/${id}`).update({ status: 'ended' }).catch(() => {});
+
+    clearCallListeners();
+    if (localStream) { localStream.getTracks().forEach(t => t.stop()); localStream = null; }
+    if (peerConnection) { peerConnection.close(); peerConnection = null; }
+    if (currentUser) setStatus('available');
+
+    hideCallScreens();
+    callState = null;
+    isMuted = false;
+    ['mute-btn', 'audio-mute-btn'].forEach(id => { $(id).textContent = 'Mute'; });
+    $('remote-video').srcObject = null;
+    $('remote-audio').srcObject = null;
+}
+
+function toggleMute() {
+    if (!localStream) return;
+    isMuted = !isMuted;
+    localStream.getAudioTracks().forEach(t => t.enabled = !isMuted);
+    ['mute-btn', 'audio-mute-btn'].forEach(id => { $(id).textContent = isMuted ? 'Unmute' : 'Mute'; });
+}
+
+// ============ SOUNDS ============
+function createMsgTone() {
+    try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = 800;
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.15);
+    } catch (e) {}
+}
+function playSound(type) {
+    if (type === 'msg') return createMsgTone();
+    const el2 = $('ring-tone');
+    if (el2) { el2.currentTime = 0; el2.play().catch(() => {}); }
+}
+function stopSound(type) {
+    if (type === 'msg') return;
+    const el2 = $('ring-tone');
+    if (el2) { el2.pause(); el2.currentTime = 0; }
+}
+
+// ============ KEYBOARD ============
+$('msg-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+});
+$('msg-input').addEventListener('input', () => {
+    if (!currentChatID) return;
+    setTyping(true);
+    clearTimeout(typingTimer);
+    typingTimer = setTimeout(() => setTyping(false), 2000);
+});
+['login-password'].forEach(id => $(id).addEventListener('keydown', e => { if (e.key === 'Enter') login(); }));
+$('signup-password').addEventListener('keydown', e => { if (e.key === 'Enter') signup(); });
+$('search-id').addEventListener('keydown', e => { if (e.key === 'Enter') searchUser(); });
+
+// ============ PRESENCE ON EXIT ============
+window.addEventListener('beforeunload', () => {
+    if (currentUser) {
+        db.ref(`users/${currentUser.uid}/callStatus`).set('available');
+    }
+    if (localStream) localStream.getTracks().forEach(t => t.stop());
+});
+</script>
+</body>
+</html>
